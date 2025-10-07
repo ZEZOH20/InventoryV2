@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
 using InventoryV2.Dtos.AuthDtos.Requests;
 
-namespace InventoryV2.Dtos.AuthDtos.Validators.SendVerificationEmail
+namespace InventoryV2.Dtos.AuthDtos.Validators
 {
-    public class SendVerificationEmailRqDtoValidator:AbstractValidator<SendVerificationEmailRqDto>
+    public class SendVerificationEmailDtoValidator:AbstractValidator<SendVerificationEmailRqDto>
     {
-        public SendVerificationEmailRqDtoValidator() {
+        public SendVerificationEmailDtoValidator() {
 
              RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required")

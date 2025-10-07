@@ -2,18 +2,13 @@
 using FluentValidation;
 using InventoryV2.Dtos.AuthDtos.Requests;
 using InventoryV2.Dtos.AuthDtos.Responses;
-using InventoryV2.Dtos.AuthDtos.Validators;
 using InventoryV2.Interfaces.IServices;
 using InventoryV2.Models;
-using InventoryV2.Seeders;
 using InventoryV2.Shares;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
-using static System.Net.WebRequestMethods;
+
 
 namespace InventoryV2.Services
 {
@@ -44,18 +39,34 @@ namespace InventoryV2.Services
             _sendEmailService = sendEmailService;
             _otpService = otpService;
         }
-        public string Login(LoginDto dto)
+        public async Task<Response<AuthDto>> LoginAsync(LoginDto dto)
         {
-            //string token = _tokenService.GenerateToken();
-            var user = _manager.FindByEmailAsync(dto.Email);
-            return "something";
+            var user = await _manager.FindByEmailAsync(dto.Email);
+
+            if (user is null || !await _manager.CheckPasswordAsync(user, dto.Password))
+                return Response<AuthDto>.Failure("Invalid email or password", HttpStatusCode.Unauthorized);
+
+            var userRoles = await _manager.GetRolesAsync(user);
+            var token = _tokenService.GenerateToken(user , userRoles[0]);
+
+            AuthDto response = new AuthDto
+            {
+                Id = user.Id,
+                Email = dto.Email,
+                UserName = user.UserName,
+                Role = userRoles[0],
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                ExpiresOn = token.ValidTo
+            };
+
+            return Response<AuthDto>.Success(response ,"Successfully");
         }
 
         public async Task<Response<AuthDto>> RegisterAsync(RegisterDto dto , CancellationToken cancellationToken)
         {
             //check if email id not exists
             if (await _manager.FindByEmailAsync(dto.Email) is not null)
-                return Response<AuthDto>.Failure("Email is already registered");
+                return Response<AuthDto>.Failure("Email is already registered", HttpStatusCode.Unauthorized);
 
             //check Otp is Correct
             bool IsVerified = await IsVerifiedEmail(dto.UserKey, dto.Otp, cancellationToken);
@@ -92,11 +103,29 @@ namespace InventoryV2.Services
            
         }
 
+        public async Task<Response> ResetPasswordAsync(ResetPasswordDto dto,CancellationToken cancellationToken)
+        {
+            var user = await _manager.FindByEmailAsync(dto.Email);
+            if (user is null)
+                return Response.Failure("Email doesn't exists");
+
+            //check Otp is Correct
+            bool IsVerified = await IsVerifiedEmail(dto.UserKey, dto.Otp, cancellationToken);
+            if (!IsVerified)
+                return Response.Failure("Your email is not verified. Please verify it again");
+
+            //reset password
+            var passwordResetToken = await _manager.GeneratePasswordResetTokenAsync(user);
+            var result = await _manager.ResetPasswordAsync(user, passwordResetToken , dto.NewPassword);
+
+            return Response.Success("Password reset Succesfully");
+
+        }
         public async Task<Response<SendVerificationEmailRsDto>> SendVerificationEmailAsync(SendVerificationEmailRqDto dto, CancellationToken cancellationToken)
         {
             //check if email id not exists
-            if (await _manager.FindByEmailAsync(dto.Email) is not null)
-                return Response<SendVerificationEmailRsDto>.Failure("Email is already registered");
+                //if (await _manager.FindByEmailAsync(dto.Email) is not null)
+                //    return Response<SendVerificationEmailRsDto>.Failure("Email is already registered");
 
             var otpGenerResult =  await _otpService.GenerateAndStoreOtpAsync(dto.Email, cancellationToken);
             var isSended = await _sendEmailService.SendVerificationEmail(dto.Email, otpGenerResult.Otp);

@@ -6,9 +6,10 @@ namespace InventoryV2.Interfaces.IServices
 {
     public interface IAuthService
     {
-        string Login(LoginDto dto);
+        Task<Response<AuthDto>> LoginAsync(LoginDto dto);
         Task<Response<AuthDto>> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken);
         Task<Response<SendVerificationEmailRsDto>> SendVerificationEmailAsync(SendVerificationEmailRqDto dto, CancellationToken cancellationToken);
+        Task<Response> ResetPasswordAsync(ResetPasswordDto dto, CancellationToken cancellationToken);
         Task<bool> IsVerifiedEmail(string userKey, string otp, CancellationToken cancellationToken);
     }
 }

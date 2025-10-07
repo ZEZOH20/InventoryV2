@@ -1,20 +1,8 @@
 ﻿using FluentValidation;
-using InventoryV2.Dtos;
 using InventoryV2.Dtos.AuthDtos.Requests;
-using InventoryV2.Dtos.AuthDtos.Responses;
-using InventoryV2.Dtos.AuthDtos.Validators;
 using InventoryV2.Interfaces.IServices;
-using InventoryV2.Models;
-using InventoryV2.Seeders;
-using InventoryV2.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security;
-using System.Security.Claims;
+
 
 namespace InventoryV2.Controllers
 {
@@ -41,13 +29,25 @@ namespace InventoryV2.Controllers
         /// <returns>A JWT token if login is successful.</returns>
         /// 
 
-        [Authorize(Roles = SystemRoles.Manager)]
+        //[Authorize(Roles = SystemRoles.Manager)]
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            string token = _authService.Login(dto);
-          
-            return Ok(token);
+            var validator = _serviceProvider.GetRequiredService<IValidator<LoginDto>>();
+            var validationResult = await validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors);
+
+            var response = await _authService.LoginAsync(dto);
+
+                return StatusCode((int)response.StatusCode, new
+                {
+                    IsAuthenticated = response.IsSuccess,
+                    message = response.Message,
+                    statusCode = response.StatusCode,
+                    data = response.Data
+                });
+
         }
 
        
@@ -62,27 +62,33 @@ namespace InventoryV2.Controllers
 
             var response = await _authService.RegisterAsync(dto , cancellationToken);
 
-
-            //Failure
-            if (!response.IsSuccess)
+      
                 return StatusCode((int) response.StatusCode, new
                 {
-                    IsAuthenticated = false,
+                    IsAuthenticated = response.IsSuccess,
                     message = response.Message,
                     statusCode = response.StatusCode,
+                    data = response.Data
                 });
 
-       
-            //Success
-            return Ok( new
-            {
-                IsAuthenticated = true,
-                message = response.Message,
-                statusCode = response.StatusCode,
-                data = response.Data
+        }
+        [HttpPost("resetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto, CancellationToken cancellationToken)
+        {
+            var validator = _serviceProvider.GetRequiredService<IValidator<ResetPasswordDto>>();
+            var validationResult = await validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors);
 
-            });
+            var response = await _authService.ResetPasswordAsync(dto , cancellationToken);
 
+    
+            return StatusCode((int)response.StatusCode, new
+               {
+                    IsAuthenticated = response.IsSuccess,
+                    message = response.Message,
+                    statusCode = response.StatusCode,
+               });
 
         }
 
@@ -96,21 +102,12 @@ namespace InventoryV2.Controllers
 
             var response = await _authService.SendVerificationEmailAsync(dto, cancellationToken);
 
-            //Failure
-            if (!response.IsSuccess)
-                return StatusCode((int)response.StatusCode, new
-                {
-                    message = response.Message,
-                    statusCode = response.StatusCode,
-                });
-
-
-            //Success
-            return Ok(new
-            {
-                message = response.Message,
-                statusCode = response.StatusCode,
-                data = response.Data
+         
+            return StatusCode((int)response.StatusCode, new
+              {
+                 message = response.Message,
+                 statusCode = response.StatusCode,
+                 data = response.Data
             });
         }
 

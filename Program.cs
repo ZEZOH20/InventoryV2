@@ -66,7 +66,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Add Identity services
 builder.Services.AddIdentityCore<ApplicationUser>()
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<SqlDbContext>();
+    .AddEntityFrameworkStores<SqlDbContext>()
+    .AddDefaultTokenProviders();
 
 // Redis Cache
 builder.Services.AddStackExchangeRedisCache(options =>
