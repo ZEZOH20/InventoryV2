@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
-using FluentValidation;
 using InventoryV2.Dtos.AuthDtos.Requests;
 using InventoryV2.Dtos.AuthDtos.Responses;
 using InventoryV2.Interfaces.IServices;
 using InventoryV2.Models;
 using InventoryV2.Shares;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 
@@ -24,15 +24,16 @@ namespace InventoryV2.Services
         ISendEmailService _sendEmailService;
         IOtpService _otpService;
         readonly IMapper _mapper;
-      
-        
+
+
         public AuthService(
             UserManager<ApplicationUser> manager,
             ITokenService tokenService,
             IOtpService otpService,
             ISendEmailService sendEmailService,
             IMapper mapper
-            ) {
+            )
+        {
             _manager = manager;
             _tokenService = tokenService;
             _mapper = mapper;
@@ -47,7 +48,7 @@ namespace InventoryV2.Services
                 return Response<AuthDto>.Failure("Invalid email or password", HttpStatusCode.Unauthorized);
 
             var userRoles = await _manager.GetRolesAsync(user);
-            var token = _tokenService.GenerateToken(user , userRoles[0]);
+            var token = _tokenService.GenerateToken(user, userRoles[0]);
 
             AuthDto response = new AuthDto
             {
@@ -59,15 +60,19 @@ namespace InventoryV2.Services
                 ExpiresOn = token.ValidTo
             };
 
-            return Response<AuthDto>.Success(response ,"Successfully");
+            return Response<AuthDto>.Success(response, "Successfully");
         }
 
-        public async Task<Response<AuthDto>> RegisterAsync(RegisterDto dto , CancellationToken cancellationToken)
+        public async Task<Response<AuthDto>> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken)
         {
+
             //check if email id not exists
-            if (await _manager.FindByEmailAsync(dto.Email) is not null)
+            var SearchedUser = await _manager.FindByEmailAsync(dto.Email);
+            if (SearchedUser is not null)
                 return Response<AuthDto>.Failure("Email is already registered", HttpStatusCode.Unauthorized);
 
+            if (SearchedUser is not null && SearchedUser.UserName == dto.UserName)
+                return Response<AuthDto>.Failure("UserName already exists", HttpStatusCode.Unauthorized);
             //check Otp is Correct
             bool IsVerified = await IsVerifiedEmail(dto.UserKey, dto.Otp, cancellationToken);
             if (!IsVerified)
@@ -77,8 +82,14 @@ namespace InventoryV2.Services
             ApplicationUser user = _mapper.Map<ApplicationUser>(dto);
             var result = await _manager.CreateAsync(user, dto.Password);
 
+
             if (!result.Succeeded)
-                return Response<AuthDto>.Failure("Registeration Fail" , HttpStatusCode.InternalServerError);
+               return Response<AuthDto>.Failure($"User creation failed: {string.Join(", ", result.Errors.Select(e => e.Description))}"
+              ,HttpStatusCode.InternalServerError);
+
+
+            //if (!result.Succeeded)
+            //    return Response<AuthDto>.Failure("Registeration Fail", HttpStatusCode.InternalServerError);
 
             // validation : Roles.All.Contains(dto.Role)
             //Add role to user
@@ -89,7 +100,7 @@ namespace InventoryV2.Services
 
             AuthDto response = new AuthDto
             {
-                Id = user.Id, 
+                Id = user.Id,
                 Email = dto.Email,
                 UserName = dto.UserName,
                 Role = dto.Role,
@@ -98,12 +109,11 @@ namespace InventoryV2.Services
             };
             return Response<AuthDto>.Success(response, "Successfully");
 
-            // send email otp verification
 
-           
+            // send email otp verification
         }
 
-        public async Task<Response> ResetPasswordAsync(ResetPasswordDto dto,CancellationToken cancellationToken)
+        public async Task<Response> ResetPasswordAsync(ResetPasswordDto dto, CancellationToken cancellationToken)
         {
             var user = await _manager.FindByEmailAsync(dto.Email);
             if (user is null)
@@ -116,7 +126,7 @@ namespace InventoryV2.Services
 
             //reset password
             var passwordResetToken = await _manager.GeneratePasswordResetTokenAsync(user);
-            var result = await _manager.ResetPasswordAsync(user, passwordResetToken , dto.NewPassword);
+            var result = await _manager.ResetPasswordAsync(user, passwordResetToken, dto.NewPassword);
 
             return Response.Success("Password reset Succesfully");
 
@@ -124,13 +134,13 @@ namespace InventoryV2.Services
         public async Task<Response<SendVerificationEmailRsDto>> SendVerificationEmailAsync(SendVerificationEmailRqDto dto, CancellationToken cancellationToken)
         {
             //check if email id not exists
-                //if (await _manager.FindByEmailAsync(dto.Email) is not null)
-                //    return Response<SendVerificationEmailRsDto>.Failure("Email is already registered");
+            //if (await _manager.FindByEmailAsync(dto.Email) is not null)
+            //    return Response<SendVerificationEmailRsDto>.Failure("Email is already registered");
 
-            var otpGenerResult =  await _otpService.GenerateAndStoreOtpAsync(dto.Email, cancellationToken);
+            var otpGenerResult = await _otpService.GenerateAndStoreOtpAsync(dto.Email, cancellationToken);
             var isSended = await _sendEmailService.SendVerificationEmail(dto.Email, otpGenerResult.Otp);
 
-            if(!isSended) 
+            if (!isSended)
                 Response<SendVerificationEmailRsDto>.Failure("Email is not valid or Network error try again");
 
 
@@ -141,11 +151,11 @@ namespace InventoryV2.Services
                 AvailableUntil = otpGenerResult.AvailableUntil
             };
 
-            return Response<SendVerificationEmailRsDto>.Success(response,"Email Successfully Sended", HttpStatusCode.OK);
+            return Response<SendVerificationEmailRsDto>.Success(response, "Email Successfully Sended", HttpStatusCode.OK);
         }
 
 
-        public async Task<bool> IsVerifiedEmail(string userKey, string otp , CancellationToken cancellationToken) 
-              => await _otpService.ValidateOtpAsync(userKey, otp , cancellationToken);
+        public async Task<bool> IsVerifiedEmail(string userKey, string otp, CancellationToken cancellationToken)
+              => await _otpService.ValidateOtpAsync(userKey, otp, cancellationToken);
     }
 }

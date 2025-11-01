@@ -2,12 +2,15 @@
 using InventoryV2.Dtos.AuthDtos.Requests;
 using InventoryV2.Interfaces.IServices;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 
 namespace InventoryV2.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
+    [EnableRateLimiting("SlidingPolicy")]
     public class AccountController : ControllerBase
     {
       

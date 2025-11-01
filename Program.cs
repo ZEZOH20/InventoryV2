@@ -2,6 +2,7 @@
 using FluentValidation;
 using InventoryV2.Data.DbContexts;
 using InventoryV2.Interfaces.IServices;
+using InventoryV2.Middlewares;
 using InventoryV2.Models;
 using InventoryV2.Profiles;
 using InventoryV2.Seeders;
@@ -10,6 +11,7 @@ using InventoryV2.Shares;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -17,6 +19,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Tokens.Experimental;
 using System.Net;
 using System.Net.Mail;
+using System.Runtime.Serialization;
 using System.Text;
 
 
@@ -35,6 +38,32 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<SqlDbContext>(
       options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+
+//rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddSlidingWindowLimiter("SlidingPolicy", opt =>
+    {
+        opt.PermitLimit = 20;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.SegmentsPerWindow = 6; // 10 sec segments
+        opt.QueueLimit = 0;
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/json";
+
+        var response = new
+        {
+            success = false,
+            message = "Too many requests. Please try again later."
+        };
+
+        await context.HttpContext.Response.WriteAsJsonAsync(response, cancellationToken: token);
+    };
+});
 
 //Authentication
 
@@ -112,6 +141,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+//global exception Handler
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 // Generate fake lifeTime request scope for scoped services
 using (var scope = app.Services.CreateScope())
 {
@@ -127,6 +160,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 
