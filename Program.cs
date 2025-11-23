@@ -65,13 +65,6 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-//Authentication
-
-//builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-//    .AddCookie(options =>
-//    {
-//        options.LoginPath = "/AuthCookie/LoginView";
-//    });
 
 // Add Jwt Configuration inside JwtSettings Model
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
@@ -124,10 +117,13 @@ builder.Services.AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssembli
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
 
 //Services
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<ISendEmailService, SendEmailService>();
+builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 
 

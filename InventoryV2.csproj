@@ -34,9 +34,7 @@
     <Folder Include="Data\Configrations\" />
     <Folder Include="Interfaces\IRepositeries\" />
     <Folder Include="Interfaces\IUnits\" />
-    <Folder Include="Models\Auth\" />
     <Folder Include="Units\" />
-    <Folder Include="Repositeries\" />
   </ItemGroup>
 
 </Project>

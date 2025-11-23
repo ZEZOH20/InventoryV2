@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventoryV2.Migrations
 {
     [DbContext(typeof(SqlDbContext))]
-    [Migration("20250924061723_ApplicationUser")]
-    partial class ApplicationUser
+    [Migration("20251103193502_SysUsersMigration")]
+    partial class SysUsersMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -70,6 +70,12 @@ namespace InventoryV2.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SupervisedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("SuperviserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -86,6 +92,8 @@ namespace InventoryV2.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("SupervisedById");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -223,6 +231,15 @@ namespace InventoryV2.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("InventoryV2.Models.ApplicationUser", b =>
+                {
+                    b.HasOne("InventoryV2.Models.ApplicationUser", "SupervisedBy")
+                        .WithMany("Subordinates")
+                        .HasForeignKey("SupervisedById");
+
+                    b.Navigation("SupervisedBy");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -272,6 +289,11 @@ namespace InventoryV2.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("InventoryV2.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("Subordinates");
                 });
 #pragma warning restore 612, 618
         }

@@ -71,8 +71,9 @@ namespace InventoryV2.Services
             if (SearchedUser is not null)
                 return Response<AuthDto>.Failure("Email is already registered", HttpStatusCode.Unauthorized);
 
-            if (SearchedUser is not null && SearchedUser.UserName == dto.UserName)
-                return Response<AuthDto>.Failure("UserName already exists", HttpStatusCode.Unauthorized);
+            //if (SearchedUser is not null && SearchedUser.UserName == dto.UserName)
+            //    return Response<AuthDto>.Failure("UserName already exists", HttpStatusCode.Unauthorized);
+
             //check Otp is Correct
             bool IsVerified = await IsVerifiedEmail(dto.UserKey, dto.Otp, cancellationToken);
             if (!IsVerified)
@@ -86,10 +87,6 @@ namespace InventoryV2.Services
             if (!result.Succeeded)
                return Response<AuthDto>.Failure($"User creation failed: {string.Join(", ", result.Errors.Select(e => e.Description))}"
               ,HttpStatusCode.InternalServerError);
-
-
-            //if (!result.Succeeded)
-            //    return Response<AuthDto>.Failure("Registeration Fail", HttpStatusCode.InternalServerError);
 
             // validation : Roles.All.Contains(dto.Role)
             //Add role to user
@@ -109,8 +106,6 @@ namespace InventoryV2.Services
             };
             return Response<AuthDto>.Success(response, "Successfully");
 
-
-            // send email otp verification
         }
 
         public async Task<Response> ResetPasswordAsync(ResetPasswordDto dto, CancellationToken cancellationToken)
