@@ -15,6 +15,8 @@ namespace InventoryV2.Services
 
         public string? UserRole()
          => _context.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
-            
+          
+        public string? UserIp()
+        => _context.HttpContext?.Connection?.RemoteIpAddress?.ToString();
     }
 }

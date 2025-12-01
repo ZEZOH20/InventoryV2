@@ -1,0 +1,38 @@
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+
+namespace InventoryV2.Models
+{
+    public class TO_Product:AuditableEntity
+    {
+        
+        [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
+        public double TO_Amount { get; set; } //
+
+        [EnumDataType(typeof(WeightUnit), ErrorMessage = "Unit Doesn't Acceptable")]
+        [MaxLength(50)]
+        public required string TO_Unit { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
+        public double TO_Price { get; set; }
+
+        [Required(ErrorMessage = "Please add Manufacturing (MD) Date")]
+        [DataType(DataType.Date)]
+        public DateTime TO_MFD { get; set; }
+
+        [Required(ErrorMessage = "Please add Expire (EXP) Date")]
+        [DataType(DataType.Date)]
+        public DateTime TO_EXP { get; set; }
+
+        [ForeignKey("Transfer_Order")]
+        public int TO_Id { get; set; }
+
+        [ForeignKey("Product")]
+        public int Product_Id { get; set; }
+
+
+        //Navigation
+        public Transfer_Order Transfer_Order { get; set; } = null!;
+        public Product Product { get; set; } = null!;
+    }
+}
