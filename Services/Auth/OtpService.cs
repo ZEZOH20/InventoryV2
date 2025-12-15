@@ -1,10 +1,10 @@
-﻿using InventoryV2.Dtos.AuthDtos.Responses;
+﻿using System.Text.Json;
+using InventoryV2.Dtos.AuthDtos.Responses;
 using InventoryV2.Interfaces.IServices;
 using InventoryV2.Shares;
 using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
 
-namespace InventoryV2.Services
+namespace InventoryV2.Services.Auth
 {
     public class OtpService : IOtpService
     {

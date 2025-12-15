@@ -17,8 +17,9 @@ namespace InventoryV2.Models
     }
     public class Product:AuditableEntity
     {
-        [MaxLength(100)]
-        public string Code { get; set; } = null!; 
+        [Key]
+        public int Code { get; set; }
+        
         [MaxLength(100)]
         public required string Name { get; set; }
 

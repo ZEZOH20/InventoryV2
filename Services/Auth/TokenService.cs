@@ -1,13 +1,13 @@
-﻿using InventoryV2.Interfaces.IServices;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using InventoryV2.Interfaces.IServices;
 using InventoryV2.Models;
 using InventoryV2.Shares;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
-namespace InventoryV2.Services
+namespace InventoryV2.Services.Auth
 {
     public class TokenService: ITokenService
     {

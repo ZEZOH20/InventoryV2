@@ -5,7 +5,7 @@ namespace InventoryV2.Models
 {
     public class Release_Order:AuditableEntity
     {
-        
+        [Key]
         public int Number { get; set; }
 
         [ForeignKey("Customer")]

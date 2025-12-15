@@ -5,6 +5,7 @@ namespace InventoryV2.Models
 {
     public class Transfer_Order:AuditableEntity
     {
+        [Key]
         public int Number { get; set; }
 
         [ForeignKey("Supplier")]

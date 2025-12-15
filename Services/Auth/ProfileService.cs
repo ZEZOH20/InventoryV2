@@ -1,18 +1,18 @@
-﻿using InventoryV2.Dtos.ProfileDto.Requests;
+﻿using System.Net;
+using InventoryV2.Dtos.ProfileDto.Requests;
 using InventoryV2.Dtos.ProfileDto.Responses;
 using InventoryV2.Interfaces.IServices;
 using InventoryV2.Models;
 using InventoryV2.Shares;
 using Microsoft.AspNetCore.Identity;
-using System.Net;
 
-namespace InventoryV2.Services
+namespace InventoryV2.Services.Auth
 {
     public class ProfileService : IProfileService
     {
         readonly UserManager<ApplicationUser> _manager;
-        readonly CurrentUserService _user;
-        public ProfileService(UserManager<ApplicationUser> manager , CurrentUserService user)
+        readonly ICurrentUserService _user;
+        public ProfileService(UserManager<ApplicationUser> manager , ICurrentUserService user)
         {
             _manager = manager;
             _user = user;
@@ -22,8 +22,8 @@ namespace InventoryV2.Services
         public async Task<Response<GetUserProfileDto>> Get()
         {
             
-            var user = await _manager.FindByIdAsync(_user.UserId());
-            var userRole = _user.UserRole();
+            var user = await _manager.FindByIdAsync(_user.UserId);
+            var userRole = _user.UserRole;
             var userProfile = new GetUserProfileDto
             {
                 Id = user.Id,
@@ -41,7 +41,7 @@ namespace InventoryV2.Services
         // Need to Update this function build according to Identity logic that can't Change UserName if it's already taken
         public async Task<Response> Update(UpdateUserProfileDto dto)
         {
-            var user = await _manager.FindByIdAsync(_user.UserId());
+            var user = await _manager.FindByIdAsync(_user.UserId);
             if (user == null) return Response.Failure("User Doesn't Exists", HttpStatusCode.NotFound);
             
             var errors = new List<string>();

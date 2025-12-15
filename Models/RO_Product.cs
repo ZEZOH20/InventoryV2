@@ -5,6 +5,8 @@ namespace InventoryV2.Models
 {
     public class RO_Product:AuditableEntity
     {
+        public int Id { get; set; }
+        
         [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
         public double RO_Amount { get; set; } //
 
@@ -17,10 +19,10 @@ namespace InventoryV2.Models
 
 
         [ForeignKey("Release_Order")]
-        public int RO_Id { get; set; }
+        public int RO_Number { get; set; }
 
         [ForeignKey("Product")]
-        public int Product_Id { get; set; }
+        public int Product_Code { get; set; }
 
 
         //Navigation

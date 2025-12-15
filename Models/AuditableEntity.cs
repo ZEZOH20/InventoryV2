@@ -5,7 +5,7 @@ namespace InventoryV2.Models;
 
 public abstract class AuditableEntity
 {
-    public int Id { get; private set; }
+    
     //Timestamps 
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; private set; }

@@ -5,6 +5,8 @@ namespace InventoryV2.Models
 {
     public class SO_Product:AuditableEntity
     {
+        public int Id { get; set; }
+        
         [Range(0, double.MaxValue, ErrorMessage = "The value must be greater than 0")]
         public double SO_Amount { get; set; } //
 
@@ -24,10 +26,10 @@ namespace InventoryV2.Models
         public DateTime SO_EXP { get; set; }
 
         [ForeignKey("Supply_Order")]
-        public int SO_Id { get; set; }
+        public int SO_Number { get; set; }
 
         [ForeignKey("Product")]
-        public int Product_Id { get; set; }
+        public int Product_Code { get; set; }
 
 
         //Navigation

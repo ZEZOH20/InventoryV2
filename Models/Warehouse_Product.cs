@@ -6,11 +6,13 @@ namespace InventoryV2.Models
 {
     public class Warehouse_Product:AuditableEntity
     {
+        public int Id { get; set; }
+        
         [ForeignKey("Product")]
-        public int Product_Id { get; set; }
+        public int Product_Code { get; set; }
 
         [ForeignKey("Warehouse")]
-        public int War_Id { get; set; }
+        public int War_Number { get; set; }
 
         [ForeignKey("Supplier")]
         public int Supplier_ID { get; set; }

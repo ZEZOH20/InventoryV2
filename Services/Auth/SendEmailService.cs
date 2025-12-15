@@ -1,8 +1,7 @@
 ﻿using FluentEmail.Core;
-using FluentEmail.Core.Models;
 using InventoryV2.Interfaces.IServices;
 
-namespace InventoryV2.Services
+namespace InventoryV2.Services.Auth
 {
     public class SendEmailService : ISendEmailService
     {

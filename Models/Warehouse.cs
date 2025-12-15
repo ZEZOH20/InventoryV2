@@ -7,6 +7,7 @@ namespace InventoryV2.Models
 {
     public class Warehouse:AuditableEntity
     {
+        [Key]
         public int Number {  get; set; }
         [MaxLength(100)]
         public string Name { get; set; } = null!;

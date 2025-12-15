@@ -31,7 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\IRepositeries\" />
     <Folder Include="Interfaces\IUnits\" />
     <Folder Include="Units\" />
   </ItemGroup>

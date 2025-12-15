@@ -21,6 +21,9 @@ using System.Net;
 using System.Net.Mail;
 using System.Runtime.Serialization;
 using System.Text;
+using InventoryV2.Interfaces;
+using InventoryV2.Repositeries;
+using InventoryV2.Services.Auth;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -122,9 +125,11 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<ISendEmailService, SendEmailService>();
-builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<ICurrentUserService,CurrentUserService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
-
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 
 var app = builder.Build();
@@ -139,7 +144,7 @@ if (app.Environment.IsDevelopment())
 
 //global exception Handler
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+// app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Generate fake lifeTime request scope for scoped services
 using (var scope = app.Services.CreateScope())

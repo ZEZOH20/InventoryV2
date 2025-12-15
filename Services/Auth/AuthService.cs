@@ -1,16 +1,14 @@
-﻿using AutoMapper;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using AutoMapper;
 using InventoryV2.Dtos.AuthDtos.Requests;
 using InventoryV2.Dtos.AuthDtos.Responses;
 using InventoryV2.Interfaces.IServices;
 using InventoryV2.Models;
 using InventoryV2.Shares;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.RateLimiting;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net;
 
-
-namespace InventoryV2.Services
+namespace InventoryV2.Services.Auth
 {
     public class AuthService : IAuthService
     {

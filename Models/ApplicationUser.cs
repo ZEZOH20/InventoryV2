@@ -13,7 +13,7 @@ namespace InventoryV2.Models
         public ICollection<ApplicationUser> Subordinates { get; set; } = [];
 
         [ForeignKey("Warehouse")]
-        public int? WorkingWarehouseId { get; set; }
+        public int? WorkingWarehouseNumber { get; set; }
         public Warehouse Working_Warehouse { get; set; } //Navigation Property
        
         public ICollection<Warehouse> Owner_Warehouses { get; set; } = []; //Navigation
