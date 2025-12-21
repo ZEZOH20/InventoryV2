@@ -7,7 +7,8 @@ namespace InventoryV2.Interfaces.IServices
 {
     public interface IImageService
     {
-       Task<string?> UploadImageAsync(IFormFile file); 
-       Task DeleteImageAsync(string? imagePath);
+        Task<string?> UploadImageAsync(IFormFile file);
+        Task DeleteImageAsync(string? imagePath);
+        Task<(Stream? Stream, string? ContentType)?> GetImageAsync(string? imagePath);
     }
 }

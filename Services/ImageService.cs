@@ -16,12 +16,44 @@ namespace InventoryV2.Services
         public Task DeleteImageAsync(string? imagePath)
         {
             if (string.IsNullOrEmpty(imagePath))
-                throw new ArgumentException("there isn't image to delete");
-            imagePath = imagePath.Replace('\\', Path.DirectorySeparatorChar)
-                                 .Replace('/', Path.DirectorySeparatorChar);
+                return Task.CompletedTask;
 
-            var fullPath = Path.Combine(_environment.WebRootPath, imagePath);
-            throw new NotImplementedException();
+            // Convert web path (with /) to OS-specific file system path
+            var normalizedPath = imagePath.Replace('/', Path.DirectorySeparatorChar);
+            var fullPath = Path.Combine(_environment.WebRootPath, normalizedPath);
+
+            // Delete the file if it exists
+            if (File.Exists(fullPath))
+                File.Delete(fullPath);
+
+            return Task.CompletedTask;
+        }
+
+        public Task<(Stream? Stream, string? ContentType)?> GetImageAsync(string? imagePath)
+        {
+            if (string.IsNullOrEmpty(imagePath))
+                return Task.FromResult<(Stream?, string?)?>(null);
+
+            // Convert web path (with /) to OS-specific file system path
+            var normalizedPath = imagePath.Replace('/', Path.DirectorySeparatorChar);
+            var fullPath = Path.Combine(_environment.WebRootPath, normalizedPath);
+            if (!File.Exists(fullPath))
+                return Task.FromResult<(Stream?, string?)?>(null);
+
+            // Open the file as a read-only stream
+            var stream = File.OpenRead(fullPath);
+            var extension = Path.GetExtension(fullPath).ToLower();
+
+            var contentType = extension switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",  // Standard MIME for JPEG
+                ".png" => "image/png",             // Standard MIME for PNG
+                ".gif" => "image/gif",             // Standard MIME for GIF
+                _ => "application/octet-stream"     // Default for unknown
+            };
+
+            // Return the stream and content type as a tuple
+            return Task.FromResult<(Stream?, string?)?>((stream, contentType));
         }
 
         public async Task<string?> UploadImageAsync(IFormFile file)
@@ -47,14 +79,32 @@ namespace InventoryV2.Services
             var uniqueFileName = $"{Guid.NewGuid()}-{datePart}{extension}";
 
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            try
             {
-                await file.CopyToAsync(fileStream); // Copy uploaded file to disk
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream); // Copy uploaded file to disk
+                }
             }
-
-            // Return relative path for DB (e.g., "images/products/guid.jpg")
-            return Path.Combine("images", uniqueFileName).Replace('\\', Path.DirectorySeparatorChar)
-                                                         .Replace('/', Path.DirectorySeparatorChar);
+            catch (IOException ex)
+            {
+                throw new InvalidOperationException("Failed to save image file.", ex);
+            }
+            // Return relative path for DB (always use forward slashes for web URLs)
+            return $"images/{uniqueFileName}";
         }
     }
 }
+
+
+
+// //  CHANGE 2: Added path validation for security
+// // Make sure the path is actually inside wwwroot (prevent path traversal attacks)
+// var rootPath = Path.GetFullPath(_environment.WebRootPath);
+// var resolvedPath = Path.GetFullPath(fullPath);
+
+// if (!resolvedPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+// {
+//     // Someone tried to delete a file outside wwwroot - security issue!
+//     throw new InvalidOperationException("Invalid image path.");
+// }
